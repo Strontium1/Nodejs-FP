@@ -2,7 +2,7 @@ import express from 'express'
 import db from './utils/database'
 import routes from './routes/api'
 import bodyParser from 'body-parser'
-import docs from './routes/route'
+import docs from './docs/route'
 
 const PORT = 3000
 
