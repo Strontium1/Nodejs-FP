@@ -2,7 +2,7 @@ import swaggerAutogen from "swagger-autogen";
 
 const doc = {
     info: {
-      version: "v0.0.1",
+      version: "v1.2",
       title: "Dokumentasi API BukaToko",
       description: "Dokumentasi API BukaToko",
     },
@@ -10,6 +10,10 @@ const doc = {
       {
         url: "http://localhost:3000/api",
         description: "Local Server",
+      },
+      {
+        url: "https://nodejs-fp.vercel.app/",
+        description: "Production",
       },
     ],
     components: {
