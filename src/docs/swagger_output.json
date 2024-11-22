@@ -807,7 +807,6 @@
         "required": [
           "name",
           "description",
-          "images",
           "price",
           "qty"
         ],
@@ -844,14 +843,10 @@
           "status": {
             "type": "string",
             "example": "pending"
-          },
-          "createdBy": {
-            "type": "string",
-            "example": "usertoko1"
           }
         },
         "required": [
-          "itemDetails"
+          "status"
         ],
         "xml": {
           "name": "OrderCreate"
