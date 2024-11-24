@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "v1.2",
+    "version": "v1.3",
     "title": "Dokumentasi API BukaToko",
     "description": "Dokumentasi API BukaToko"
   },
@@ -13,28 +13,6 @@
     {
       "url": "https://nodejs-fp.vercel.app/",
       "description": "Production"
-    }
-  ],
-  "tags": [
-    {
-      "name": "Products",
-      "description": "Mengatur semua pembuatan, perubahan, dan penghapusan data tentang produk."
-    },
-    {
-      "name": "Category",
-      "description": "Mengatur semua pembuatan, perubahan, dan penghapusan data tentang kategori produk."
-    },
-    {
-      "name": "Orders",
-      "description": "Mengatur semua pembuatan, perubahan, dan penghapusan data tentang pemesanan produk."
-    },
-    {
-      "name": "Auth",
-      "description": "Mengatur semua pembuatan, perubahan, dan penghapusan data tentang otentikasi user."
-    },
-    {
-      "name": "Media",
-      "description": "Mengatur semua pembuatan, perubahan, dan penghapusan data media produk dan user."
     }
   ],
   "paths": {
@@ -84,6 +62,12 @@
         "responses": {
           "403": {
             "description": "Forbidden"
+          },
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         },
         "requestBody": {
@@ -341,7 +325,7 @@
         "tags": [
           "Orders"
         ],
-        "description": "",
+        "description": "Only outputs orders that the user made. Admins able to see all orders.",
         "responses": {
           "200": {
             "description": "OK"
@@ -355,25 +339,10 @@
         "tags": [
           "Orders"
         ],
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "description": "Only accessible by user who logged in, and the admins.",
         "responses": {
           "201": {
             "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "500": {
             "description": "Internal Server Error"
@@ -406,7 +375,7 @@
         "tags": [
           "Orders"
         ],
-        "description": "",
+        "description": "Only accessible by the user who created it, and the admins.",
         "parameters": [
           {
             "name": "id",
@@ -420,6 +389,9 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden"
           },
           "500": {
             "description": "Internal Server Error"
@@ -807,6 +779,7 @@
         "required": [
           "name",
           "description",
+          "images",
           "price",
           "qty"
         ],
@@ -837,8 +810,24 @@
         "type": "object",
         "properties": {
           "itemDetails": {
-            "type": "string",
-            "example": "kfvj2i29fm26382sasf"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Apel"
+                },
+                "productId": {
+                  "type": "string",
+                  "example": "f652834nd"
+                },
+                "qty": {
+                  "type": "number",
+                  "example": 3
+                }
+              }
+            }
           },
           "status": {
             "type": "string",
@@ -846,6 +835,7 @@
           }
         },
         "required": [
+          "itemDetails",
           "status"
         ],
         "xml": {

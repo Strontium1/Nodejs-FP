@@ -11,6 +11,9 @@ async function init () {
     await db()
 
     const app = express()
+    app.get("/", (req, res) => {
+      res.redirect("/docs");
+    });
 
     app.use(bodyParser.json())
     app.use(bodyParser.urlencoded({ extended: true }))

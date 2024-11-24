@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as Yup from 'yup';
 import { create, findAll, findOne, update, remove } from "../services/product.service"
+import CategoryModel from "../models/category.model";
 
 const createValidationSchema = Yup.object().shape({
   name: Yup.string().required(),
@@ -27,12 +28,24 @@ export default {
      #swagger.requestBody = {
       required: true,
       schema: {
-        $ref: "#/components/schemas/CategoryCreate"
+        $ref: "#/components/schemas/ProductCreate"
       }
      }
      */
     try {
+      const catId = req.body.categoryId
+      const validProduct = await CategoryModel.findById(catId)
+      if (!validProduct) {
+        return res.status(500).json({
+          message: "Invalid Category"
+        })
+      }
+
       const result = await create(req.body);
+      const updateCategory = await CategoryModel.findByIdAndUpdate(
+        result.categoryId,
+        { $push: { products: result._id }}
+      )
       res.status(201).json({
         data: result,
         message: "Success create product",

@@ -51,6 +51,7 @@ const UserSchema = new Schema<User>(
 UserSchema.pre("save", function (next) {
   const user = this;
   user.password = encrypt(user.password);
+  user.email = encrypt(user.email);
   next();
 });
 

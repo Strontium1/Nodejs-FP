@@ -59,7 +59,7 @@ export default {
      #swagger.tags = ['Category']
      */
     try {
-      const result = await findOne(req.params?.id);
+      const result = await findOne(req.params?.id, "products");
       res.status(200).json({
         data: result,
         message: "Success get one category",

@@ -1,80 +1,81 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express'
 
-import UserModel, { User } from "../models/user.model";
-import { IRequestWithUser } from "../middlewares/auth.middleware";
+import UserModel, { User } from '../models/user.model'
+import { IRequestWithUser } from '../middlewares/auth.middleware'
 
-import * as Yup from "yup";
-import { login, register, updateProfile } from "../services/auth.service";
-import { ObjectId } from "mongoose";
+import * as Yup from 'yup'
+import { login, register, updateProfile } from '../services/auth.service'
+import { ObjectId } from 'mongoose'
+import { getUserID } from '../utils/jwt'
 
 const registerSchema = Yup.object().shape({
-    username: Yup.string().required(),
-    email: Yup.string().email().required(),
-    password: Yup.string().required(),
-    confirmPassword: Yup.string().oneOf(
-      [Yup.ref("password"), ""],
-      "Passwords must match"
-    ),
-    roles: Yup.string().optional(),
-    orders: Yup.string().optional(),
-  });
-  
-  const loginSchema = Yup.object({
-    email: Yup.string().email().required(),
-    password: Yup.string().required(),
-  });
-  
-  type TLoginBody = Yup.InferType<typeof loginSchema>;
-  type TRegisterBody = Yup.InferType<typeof registerSchema>;
-  
-  interface IRequestLogin extends Request {
-    body: TLoginBody;
-  }
-  
-  interface IRequestRegister extends Request {
-    body: TRegisterBody;
-  }
+  username: Yup.string().required(),
+  email: Yup.string().email().required(),
+  password: Yup.string().required(),
+  confirmPassword: Yup.string().oneOf(
+    [Yup.ref('password'), ''],
+    'Passwords must match'
+  ),
+  roles: Yup.string().optional(),
+  orders: Yup.string().optional()
+})
+
+const loginSchema = Yup.object({
+  email: Yup.string().email().required(),
+  password: Yup.string().required()
+})
+
+type TLoginBody = Yup.InferType<typeof loginSchema>
+type TRegisterBody = Yup.InferType<typeof registerSchema>
+
+interface IRequestLogin extends Request {
+  body: TLoginBody
+}
+
+interface IRequestRegister extends Request {
+  body: TRegisterBody
+}
 
 export default {
-  async login(req: IRequestLogin, res: Response) {
+  async login (req: IRequestLogin, res: Response) {
     /**
      #swagger.tags = ['Auth']
     #swagger.requestBody = {
       required: true,
       schema: {
-        $ref: "#/components/schemas/ProductCreate"
+        $ref: "#/components/schemas/LoginRequest"
       }
     }
     */
     try {
-      const { email, password } = req.body;
-      await loginSchema.validate({ email, password });
-      const token = await login({ email, password });
+      const { email, password } = req.body
+      await loginSchema.validate({ email, password })
+      const token = await login({ email, password })
       res.status(200).json({
-        message: "login success",
-        data: token,
-      });
+        message: 'login success',
+        data: token
+      })
     } catch (error) {
-      const err = error as Error;
+      const err = error as Error
       res.status(500).json({
         data: null,
-        message: err.message,
-      });
+        message: err.message
+      })
     }
   },
-  async register(req: IRequestRegister, res: Response) {
+  async register (req: Request, res: Response) {
     /**
      #swagger.tags = ['Auth']
      #swagger.requestBody = {
       required: true,
       schema: {
-        $ref: "#/components/schemas/LoginRequest"
+        $ref: "#/components/schemas/RegisterRequest"
       }
      }
      */
     try {
       const { email, password, username, confirmPassword, roles, orders } =
-        req.body;
+        req.body
 
       await registerSchema.validate({
         username,
@@ -82,30 +83,30 @@ export default {
         password,
         confirmPassword,
         roles,
-        orders,
-      });
+        orders
+      })
 
       const user = await register({
         username,
         email,
         password,
         roles,
-        orders,
-      });
+        orders
+      })
 
       res.status(200).json({
-        message: "registration success!",
-        data: user,
-      });
+        message: 'registration success!',
+        data: user
+      })
     } catch (error) {
-      const err = error as Error;
+      const err = error as Error
       res.status(500).json({
         data: err.message,
-        message: "Failed register",
-      });
+        message: 'Failed to register'
+      })
     }
   },
-  async me(req: IRequestWithUser, res: Response) {
+  async me (req: Request, res: Response) {
     /**
      #swagger.tags = ['Auth']
      #swagger.security = [{
@@ -113,28 +114,28 @@ export default {
      }]
      */
     try {
-      const id = req.user?.id;
-      const user = await UserModel.findById(id);
+      const id = getUserID(req, res)
+      const user = await UserModel.findById(id)
       if (!user) {
         return res.status(403).json({
-          message: "user not found",
-          data: null,
-        });
+          message: 'User not found',
+          data: null
+        })
       }
 
       res.status(200).json({
-        message: "success fetch user profile",
-        data: user,
-      });
+        message: 'success fetch user profile',
+        data: user
+      })
     } catch (error) {
-      const err = error as Error;
+      const err = error as Error
       res.status(500).json({
         data: err.message,
-        message: "Failed get user profile",
-      });
+        message: 'Failed get user profile'
+      })
     }
   },
-  async updateProfile(req: IRequestWithUser, res: Response) {
+  async updateProfile (req: IRequestWithUser, res: Response) {
     /**
      #swagger.tags = ['Auth']
      #swagger.requestBody = {
@@ -146,21 +147,21 @@ export default {
      }]
      */
     try {
-      const id = req.user?.id;
+      const id = req.user?.id
       const result = await updateProfile(
         id as unknown as ObjectId,
         req.body as User
-      );
+      )
       res.status(200).json({
-        message: "Profile updated successfully",
-        data: result,
-      });
+        message: 'Profile updated successfully',
+        data: result
+      })
     } catch (error) {
-      const err = error as Error;
+      const err = error as Error
       res.status(500).json({
         data: err.message,
-        message: "Failed update user profile",
-      });
+        message: 'Failed update user profile'
+      })
     }
-  },
-};
+  }
+}

@@ -2,7 +2,7 @@ import swaggerAutogen from "swagger-autogen";
 
 const doc = {
     info: {
-      version: "v1.2",
+      version: "v1.3",
       title: "Dokumentasi API BukaToko",
       description: "Dokumentasi API BukaToko",
     },
@@ -53,9 +53,11 @@ const doc = {
           products: "kfvj2i29fm26382sasf"
         },
         OrderCreate: {
-          $itemDetails: "kfvj2i29fm26382sasf",
-          status: "pending",
-          createdBy: "usertoko1"
+          $itemDetails: [{
+            name: "Apel",
+            qty: 3
+          }],
+          $status: "pending"
         },
       },
     },

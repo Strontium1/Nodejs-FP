@@ -8,8 +8,8 @@ export const findAll = async (popName: string): Promise<Category[] | null> => {
   const result = await CategoryModel.find().populate(popName);
   return result;
 };
-export const findOne = async (id: string): Promise<Category | null> => {
-  const result = await CategoryModel.findById(id);
+export const findOne = async (id: string, popName: string): Promise<Category | null> => {
+  const result = await CategoryModel.findById(id).populate(popName);
   return result;
 };
 export const update = async (

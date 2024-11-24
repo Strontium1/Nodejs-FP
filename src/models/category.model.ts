@@ -2,7 +2,7 @@ import mongoose, { Types } from "mongoose";
 
 export interface Category {
   name: string;
-  products: string;
+  products: Types.ObjectId;
   createdAt?: string;
 }
 
