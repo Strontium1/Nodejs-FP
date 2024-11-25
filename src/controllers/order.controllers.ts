@@ -169,8 +169,8 @@ export default {
           (total, item) => total + item.subTotal,
           0
         ),
-        username: getUserUsername(req, res),
-        createdBy: getUserID(req, res)
+        username: getUserUsername(req),
+        createdBy: getUserID(req)
       })
 
       const result = await create(order)
@@ -191,24 +191,30 @@ export default {
      #swagger.tags = ['Orders']
      */
     try {
-      const result = await findAll(getUserRoles(req, res), getUserID(req, res))
-      if (!result) {
+      let result;
+      const roles = getUserRoles(req)
+      const id = getUserID(req)
+      if (roles == 'admin'){
+        result = await OrderModel.find()
+      } else {
+        result = await OrderModel.find({ createdBy: id })
+      }
+
+      if (!result || result.length < 1) {
         return res.status(500).json({
-          message: `No order found for user ${getUserUsername(req, res)}.`
+          message: `No order found for user ${getUserUsername(req)}.`
         })
-      } else if (result.length < 1) {
-        return res.status(500).json({
-          message: `No order found for user ${getUserUsername(req, res)}.`
+      } else {
+        res.status(200).json({
+          data: result,
+          message: 'Success get all orders'
         })
       }
-      res.status(200).json({
-        data: result,
-        message: 'Success get all orders'
-      })
+
     } catch (error) {
       const err = error as Error
       res.status(500).json({
-        data: err.message,
+        error: err.message,
         message: 'Failed get all orders'
       })
     }
@@ -218,7 +224,7 @@ export default {
      #swagger.tags = ['Orders']
      */
     try {
-      var result = await findOne(getUserRoles(req, res), getUserID(req, res), req.params.id)
+      var result = await findOne(getUserRoles(req), getUserID(req), req.params.id)
       if (!result) {
         return res.status(500).json({
           message: "No order found or you don't have sufficient permission to access order."
@@ -231,7 +237,7 @@ export default {
     } catch (error) {
       const err = error as Error
       res.status(500).json({
-        data: err.message,
+        error: err.message,
         message: `Failed get order ${req.params.id}`
       })
     }

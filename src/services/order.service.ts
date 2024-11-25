@@ -6,14 +6,10 @@ export const create = async (payload: Orders): Promise<Orders | null> => {
   return result
 }
 export const findAll = async (
-  role: string,
+  role: number,
   id: string
 ): Promise<Orders[] | null> => {
-  if (role == 'admin') {
-    var result = await OrderModel.find()
-  } else {
-    var result = await OrderModel.find({ createdBy: id })
-  }
+  const result = await OrderModel.find()
   return result
 }
 export const findOne = async (role: string, userID: string, id: string): Promise<Orders | null> => {

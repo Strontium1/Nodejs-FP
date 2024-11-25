@@ -114,7 +114,7 @@ export default {
      }]
      */
     try {
-      const id = getUserID(req, res)
+      const id = getUserID(req)
       const user = await UserModel.findById(id)
       if (!user) {
         return res.status(403).json({
