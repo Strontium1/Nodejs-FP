@@ -3,6 +3,17 @@ import UserModel, { User } from '../models/user.model'
 import { encrypt } from '../encryption'
 import { generateToken } from '../utils/jwt'
 
+export class CustomError extends Error {
+  statusCode: number
+  constructor (message: string, statusCode?: number) {
+    super(message)
+    if (!statusCode){
+      statusCode = 500
+    }
+    this.statusCode = statusCode
+  }
+}
+
 interface ILoginPayload {
   email: string
   password: string

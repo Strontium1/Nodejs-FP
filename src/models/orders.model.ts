@@ -1,6 +1,7 @@
 import mongoose, { Types } from 'mongoose'
 
 export interface ItemDetail {
+  _id: Types.ObjectId;
   name: string;
   productId: Types.ObjectId;
   qty: number;

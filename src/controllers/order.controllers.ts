@@ -8,9 +8,9 @@ import {
 } from '../services/order.service'
 import * as Yup from 'yup'
 import OrderModel from '../models/orders.model'
-import { IRequestWithUser } from '../middlewares/auth.middleware'
 import { getUserID, getUserRoles, getUserUsername } from '../utils/jwt'
 import ProductsModel from '../models/products.model'
+import { CustomError } from '../services/auth.service'
 
 const orderValidationSchema = Yup.object().shape({
   grandTotal: Yup.number().optional(),
@@ -71,7 +71,7 @@ export default {
             if (!product) {
               invalidNameErr += 1
               err_count += 1
-              return { message: 'Invalid Name' }
+              throw new CustomError('Invalid Name', 500)
             }
 
             // calculate stock and update products
@@ -83,13 +83,13 @@ export default {
             } else {
               orderExceedStock += 1
               err_count += 1
-              return { message: 'No Stock' }
+              throw new CustomError('No stock', 500)
             }
             if (stockLeft < 0) {
               orderExceedStock += 1
               err_count += 1
             } else {
-              const updateStock = await ProductsModel.findByIdAndUpdate(
+              await ProductsModel.findByIdAndUpdate(
                 product._id,
                 { $set: { qty: stockLeft } }
               )
@@ -108,7 +108,7 @@ export default {
               // get name by ID
               invalidIDErr += 1
               err_count += 1
-              return { message: 'Invalid ID' }
+              throw new CustomError('Invalid ID', 500)
             }
 
             // calculate stock
@@ -120,14 +120,14 @@ export default {
             } else {
               orderExceedStock += 1
               err_count += 1
-              return { message: 'No Stock' }
+              throw new CustomError('No stock', 500)
             }
             if (stockLeft < 0) {
               orderExceedStock += 1
               err_count += 1
-              return { message: 'No Stock' }
+              throw new CustomError('No stock', 500)
             } else {
-              const updateStock = await ProductsModel.findByIdAndUpdate(
+              await ProductsModel.findByIdAndUpdate(
                 product._id,
                 { $set: { qty: stockLeft } }
               )
@@ -138,27 +138,15 @@ export default {
           } else {
             noIDandName += 1
             err_count += 1
-            return { message: 'No Name and ID supplied' }
+            throw new CustomError('No name and id supplied', 500)
           }
           return items
         })
       )
 
-      if (err_count > 0) {
-        return res.status(500).json({
-          message: 'Error when validating items',
-          invalidName: `${invalidNameErr} error`,
-          invalidID: `${invalidIDErr} error`,
-          noIDandName: `${noIDandName} error`,
-          orderExceedStock: `${orderExceedStock} error`
-        })
-      }
-
       if (!productIds) {
-        return res.status(500).json({
-          message: 'Something happened',
-          data: productIds
-        })
+        console.log(productIds)
+        throw new CustomError('Something happened', 500)
       }
 
       // Add ID to new order
@@ -179,10 +167,14 @@ export default {
         message: 'Success create order'
       })
     } catch (error) {
-      const err = error as Error
-      res.status(500).json({
+      var err = error as CustomError
+      console.log(err.statusCode)
+      if (!err.statusCode) {
+        err.statusCode = 500
+      }
+      res.status(err.statusCode).json({
         data: err.message,
-        message: 'Failed create order'
+        message: `Failed delete order ${req.params.id}`
       })
     }
   },
@@ -191,31 +183,27 @@ export default {
      #swagger.tags = ['Orders']
      */
     try {
-      let result;
+      let result
       const roles = getUserRoles(req)
       const id = getUserID(req)
-      if (roles == 'admin'){
+      if (roles == 'admin') {
         result = await OrderModel.find()
       } else {
         result = await OrderModel.find({ createdBy: id })
       }
 
       if (!result || result.length < 1) {
-        return res.status(500).json({
-          message: `No order found for user ${getUserUsername(req)}.`
-        })
-      } else {
-        res.status(200).json({
-          data: result,
-          message: 'Success get all orders'
-        })
+        throw new CustomError(`No order found for user ${getUserUsername(req)}.`, 500)
       }
-
+      res.status(200).json({
+        data: result,
+        message: 'Success get all orders'
+      })
     } catch (error) {
-      const err = error as Error
-      res.status(500).json({
-        error: err.message,
-        message: 'Failed get all orders'
+      const err = error as CustomError
+      res.status(err.statusCode).json({
+        data: err.message,
+        message: `Failed getting order ${req.params.id}`
       })
     }
   },
@@ -224,22 +212,44 @@ export default {
      #swagger.tags = ['Orders']
      */
     try {
-      var result = await findOne(getUserRoles(req), getUserID(req), req.params.id)
+      const order_id = req.params.id
+      const item_id = req.params.itemID
+
+      var result = await findOne(
+        getUserRoles(req),
+        getUserID(req),
+        order_id,
+        item_id,
+      )
       if (!result) {
-        return res.status(500).json({
-          message: "No order found or you don't have sufficient permission to access order."
+        throw new CustomError(`No order found or you don't have sufficient permission to access order.`, 500)
+      }
+      if (item_id === undefined) {
+        res.status(200).json({
+          data: result,
+          message: `Success get order ${order_id}`
+        })
+      } else {
+        res.status(200).json({
+          data: result,
+          message: `Success get item ${item_id} from order ${order_id}`
         })
       }
-      res.status(200).json({
-        data: result,
-        message: `Success get order ${req.params.id}`
-      })
     } catch (error) {
-      const err = error as Error
-      res.status(500).json({
-        error: err.message,
-        message: `Failed get order ${req.params.id}`
-      })
+      const order_id = req.params.id
+      const item_id = req.params.itemID
+      const err = error as CustomError
+      if (item_id === undefined) {
+        res.status(err.statusCode).json({
+          error: err.message,
+          message: `Failed to get order ${order_id}`
+        })
+      } else {
+        res.status(err.statusCode).json({
+          error: err.message,
+          message: `Failed to get item ${item_id} from order ${order_id}`
+        })
+      }
     }
   },
   async update (req: Request, res: Response) {
@@ -272,27 +282,28 @@ export default {
      }]
      */
     try {
-      var productID = await OrderModel.findById(req.params.id).select(
-        'itemDetails'
-      )
-      if (!productID) {
-        return res.status(500).json({
-          message: 'Invalid order ID'
-        })
+      const user_id = getUserID(req)
+      const user_roles = getUserRoles(req)
+      const order = await OrderModel.findById(req.params.id)
+
+      if (!order) {
+        throw new Error('Invalid product ID')
       }
 
-      productID.itemDetails.forEach(items => {
-        const qtyProd = ProductsModel.findById(items.productId).then(
-          prodItem => {
-            if (!prodItem) {
-              return res.status(500).json({
-                message: 'Invalid product ID'
-              })
-            }
-            prodItem.qty = prodItem.qty + items.qty
-            prodItem.save()
+      if (order.createdBy.toString() != user_id && user_roles != 'admin') {
+        throw new CustomError('Forbidden', 403)
+      }
+
+      order.itemDetails.forEach(items => {
+        ProductsModel.findById(items.productId).then(prodItem => {
+          if (!prodItem) {
+            return res.status(500).json({
+              message: 'Invalid product ID'
+            })
           }
-        )
+          prodItem.qty = prodItem.qty + items.qty
+          prodItem.save()
+        })
       })
       const result = await remove(req.params?.id)
 
@@ -301,9 +312,10 @@ export default {
         message: `Success delete order ${req.params.id}`
       })
     } catch (error) {
-      const err = error as Error
-      res.status(500).json({
+      const err = error as CustomError
+      res.status(err.statusCode).json({
         data: err.message,
+        code: err.statusCode,
         message: `Failed delete order ${req.params.id}`
       })
     }

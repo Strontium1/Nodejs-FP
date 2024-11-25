@@ -1,5 +1,6 @@
-import OrderModel, { Orders } from '../models/orders.model'
+import OrderModel, { ItemDetail, Orders } from '../models/orders.model'
 import { ExtendedOrder } from '../models/orders.model'
+import { CustomError } from './auth.service'
 
 export const create = async (payload: Orders): Promise<Orders | null> => {
   const result = await OrderModel.create(payload)
@@ -12,19 +13,47 @@ export const findAll = async (
   const result = await OrderModel.find()
   return result
 }
-export const findOne = async (role: string, userID: string, id: string): Promise<Orders | null> => {
+export const findOne = async (role: string, userID: string, id: string, item_id?: string): Promise<Orders | ItemDetail | undefined | null> => {
   let result;
+  let items;
+  result = await OrderModel.findById(id)
+  if (!result) {
+    throw new CustomError("Invalid order ID")
+  }
+  
   if (role == 'admin') {
-    result = await OrderModel.findById(id);
-    (result as ExtendedOrder).forbidAccess = false;
+    if (item_id === undefined) {
+      return result
+    } else {
+      items = result?.itemDetails
+      const selected_item = items.find((item) => item._id.equals(item_id))
+      if (!selected_item) {
+        throw new CustomError("Item not found")
+      } else {
+        return selected_item
+      }
+    }
   } else {
-    result = await OrderModel.find({ _id: id, createdBy: userID})
-    result = result.length > 0 ? result[0] : null;
-    if (result != null) {
-      (result as ExtendedOrder).forbidAccess = false;
+    if (item_id === undefined) {
+      if (result.createdBy.toString() != userID) {
+        throw new CustomError("Forbidden", 403)
+      } else {
+        return result
+      }
+    } else {
+      if (result.createdBy.toString() != userID) {
+        throw new CustomError("Forbidden", 403)
+      } else {
+        let items = result?.itemDetails
+        const selected_item = items.find((item) => item._id.equals(item_id))
+        if (!selected_item) {
+          throw new CustomError("Item not found")
+        } else {
+          return selected_item
+        }
+      }
     }
   }
-  return result
 }
 export const update = async (
   id: string,

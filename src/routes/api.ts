@@ -27,8 +27,8 @@ router.get("/order", orderControllers.findAll);
 router.post("/order", orderControllers.create);
 router.get("/order/:id", orderControllers.findOne);
 router.put("/order/:id", orderControllers.update);
-// router.get("/order/:id/:itemID", orderControllers.findOneItem);
-// router.put("/order/:id/:itemID", orderControllers.updateItem);
+router.get("/order/:id/:itemID", orderControllers.findOne);
+router.put("/order/:id/:itemID", orderControllers.update);
 router.delete("/order/:id", orderControllers.delete);
 
 router.post("/auth/login", authController.login);
